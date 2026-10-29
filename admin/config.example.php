@@ -40,6 +40,9 @@ return [
     // Shown in the admin header.
     'site_name' => 'Pasora Solution Ltd',
 
+    // owner/repo on GitHub — used to show the latest commit in the panel.
+    'github_repo' => 'pasorasolutionltd/pasora-website',
+
     // Lock the account for this many seconds after 5 failed logins.
     'lockout_seconds' => 300,
 ];

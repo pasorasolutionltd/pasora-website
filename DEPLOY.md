@@ -96,5 +96,7 @@ it if you're using Hostinger's own auto-deploy.
 - **Real phone number** — `+233 00 000 0000` is a placeholder in
   `index.html` (contact block, footer, and the `telephone` in the JSON-LD).
 - **Domain** — canonical/OpenGraph/schema URLs and `sitemap.xml`/`robots.txt`
-  all assume `https://www.pasorasolution.com/`. Correct if your live domain
-  differs, and point that domain at Hostinger (hPanel → DNS / nameservers).
+  use `https://pasorasolutionltd.com/` (the live domain). Update these if the
+  domain ever changes.
+- **Contact email** — `index.html` still shows `info@pasorasolution.com`;
+  confirm the real mailbox (e.g. `info@pasorasolutionltd.com`).

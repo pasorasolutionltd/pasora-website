@@ -86,6 +86,46 @@ function current_commit(string $path): ?string
     return ($out === '' || stripos($out, 'fatal') !== false) ? null : $out;
 }
 
+/** Latest commit on GitHub's main branch (best-effort; null on any failure). */
+function latest_github_commit(string $repo): ?array
+{
+    $repo = trim($repo);
+    if ($repo === '' || !preg_match('~^[\w.-]+/[\w.-]+$~', $repo)) {
+        return null;
+    }
+    $url  = "https://api.github.com/repos/$repo/commits/main";
+    $json = false;
+    if (function_exists('curl_init')) {
+        $ch = curl_init($url);
+        curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_TIMEOUT        => 8,
+            CURLOPT_HTTPHEADER     => ['User-Agent: Pasora-Admin', 'Accept: application/vnd.github+json'],
+        ]);
+        $json = curl_exec($ch);
+        curl_close($ch);
+    } else {
+        $ctx = stream_context_create(['http' => [
+            'header'        => "User-Agent: Pasora-Admin\r\nAccept: application/vnd.github+json\r\n",
+            'timeout'       => 8,
+            'ignore_errors' => true,
+        ]]);
+        $json = @file_get_contents($url, false, $ctx);
+    }
+    if (!$json) {
+        return null;
+    }
+    $data = json_decode((string) $json, true);
+    if (!is_array($data) || empty($data['sha'])) {
+        return null;
+    }
+    return [
+        'sha'     => substr((string) $data['sha'], 0, 7),
+        'message' => (string) strtok((string) ($data['commit']['message'] ?? ''), "\n"),
+        'date'    => (string) ($data['commit']['author']['date'] ?? ''),
+    ];
+}
+
 function deploy_log_tail(int $n = 12): array
 {
     $file = __DIR__ . '/deploy.log';
@@ -395,11 +435,13 @@ if ($action === 'settings') {
 }
 
 /* ── Dashboard ────────────────────────────────────────────────── */
-$commit = current_commit($config['git_path'] ?: dirname(__DIR__));
+$path   = $config['git_path'] ?: dirname(__DIR__);
+$commit = current_commit($path);
 $mode   = $config['deploy_mode'] ?? 'webhook';
 $ready  = $mode === 'git'
-        ? (shell_available() && is_dir(($config['git_path'] ?: dirname(__DIR__)) . '/.git'))
-        : (trim((string) $config['deploy_hook_url']) !== '');
+        ? (shell_available() && is_dir($path . '/.git'))
+        : (trim((string) ($config['deploy_hook_url'] ?? '')) !== '');
+$gh     = latest_github_commit((string) ($config['github_repo'] ?? ''));
 
 page_top('Deploy', $config['site_name']);
 
@@ -411,42 +453,53 @@ echo '<form method="get" action="index.php" style="margin:0"><input type="hidden
 echo '<form method="get" action="index.php" style="margin:0"><input type="hidden" name="action" value="logout">'
    . '<button class="ghost" type="submit">Sign out</button></form>';
 echo '</span>';
-echo '</div><p>Publish the latest code from GitHub to this server.</p>';
+echo '</div><p>This site is connected to GitHub and publishes automatically.</p>';
 
 if ($flash) {
     echo '<div class="note ' . ($flash[0] ? 'ok' : 'err') . '">'
-       . ($flash[0] ? '✓ Deploy triggered. ' : '✗ Deploy failed. ')
+       . ($flash[0] ? '&#10003; Deploy triggered. ' : '&#10007; Deploy failed. ')
        . h($flash[1]) . '</div>';
 }
 
 echo '<div class="card"><h2>Status</h2>';
-echo '<div class="kv"><span>Deploy method</span><span>' . h($mode) . '</span></div>';
-echo '<div class="kv"><span>Configured</span><span>' . ($ready ? 'Yes' : 'No — see config.local.php') . '</span></div>';
-echo '<div class="kv"><span>Current commit</span><span>' . ($commit ? h($commit) : '—') . '</span></div>';
+if ($gh) {
+    echo '<div class="kv"><span>Latest on GitHub</span><span>' . h($gh['sha'] . ' — ' . $gh['message']) . '</span></div>';
+    if ($gh['date'] !== '') {
+        echo '<div class="kv"><span>Committed</span><span>' . h(date('Y-m-d H:i', (int) strtotime($gh['date']))) . '</span></div>';
+    }
+} else {
+    echo '<div class="kv"><span>Latest on GitHub</span><span>&mdash;</span></div>';
+}
+if ($commit) {
+    echo '<div class="kv"><span>Server commit</span><span>' . h($commit) . '</span></div>';
+}
+echo '<div class="kv"><span>Auto-deploy</span><span>On &mdash; deploys on every push to main</span></div>';
 echo '<div class="kv"><span>Server time</span><span>' . h(date('Y-m-d H:i:s')) . '</span></div>';
 echo '</div>';
 
 echo '<div class="card"><h2>Publish</h2>';
-if (!$ready) {
-    echo '<div class="note err">Deployment is not configured yet. Open '
-       . '<code>admin/config.local.php</code> and set '
-       . ($mode === 'git' ? 'a valid <code>git_path</code> with a <code>.git</code> folder, and enable SSH/git on your plan.'
-                          : 'your <code>deploy_hook_url</code> (copy it from hPanel → Git → auto-deployment).')
-       . '</div>';
+if ($ready) {
+    echo '<p>Click to ' . ($mode === 'git' ? 'run <code>git pull</code> on the server.' : 'send the deploy webhook.') . '</p>';
+    echo '<form method="post" action="index.php">';
+    echo '<input type="hidden" name="csrf" value="' . h(csrf_token()) . '">';
+    echo '<input type="hidden" name="do" value="deploy">';
+    echo '<button type="submit">Deploy now</button>';
+    echo '</form>';
+} else {
+    echo '<div class="note ok">Your site deploys <b>automatically</b> every time you push to the '
+       . '<code>main</code> branch on GitHub &mdash; usually within a few seconds.</div>';
+    echo '<p>To re-publish without a new commit, use '
+       . '<b>hPanel &rarr; Websites &rarr; Advanced &rarr; GIT &rarr; Redeploy</b>. '
+       . 'A one-click redeploy button here would need SSH/git access, which this hosting plan does not allow.</p>';
 }
-echo '<p>Clicking Deploy ' . ($mode === 'git' ? 'runs <code>git pull</code> on the server.' : 'sends the deploy webhook so Hostinger pulls the latest commit.') . '</p>';
-echo '<form method="post" action="index.php">';
-echo '<input type="hidden" name="csrf" value="' . h(csrf_token()) . '">';
-echo '<input type="hidden" name="do" value="deploy">';
-echo '<button type="submit"' . ($ready ? '' : ' disabled') . '>Deploy now</button>';
-echo '</form></div>';
+echo '</div>';
 
 $tail = deploy_log_tail();
 echo '<div class="card"><h2>Recent activity</h2>';
 if ($tail) {
     echo '<pre>' . h(implode("\n", $tail)) . '</pre>';
 } else {
-    echo '<p>No deploys logged yet.</p>';
+    echo '<p>No admin activity logged yet.</p>';
 }
 echo '</div>';
 
