@@ -9,6 +9,13 @@ admin/deploy.log
 admin/*.log
 admin/.auth.php
 
+# ── Admin-managed site content (server-side, survives deploys) ──
+admin/content.local.json
+
+# ── Uploaded media (ignore the files, keep the protection rule) ──
+uploads/*
+!uploads/.htaccess
+
 # ── Future-proofing (not used today, but safe to ignore) ──
 node_modules/
 vendor/

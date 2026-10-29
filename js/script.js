@@ -99,7 +99,8 @@ form.addEventListener('submit', e => {
     `Service: ${data.get('service')}\n\n` +
     `${data.get('message')}`
   );
-  window.location.href = `mailto:info@pasorasolution.com?subject=${subject}&body=${body}`;
-  formNote.textContent = 'Opening your email app now. You can also write to us directly at info@pasorasolution.com';
+  const to = (form.dataset.contactEmail || 'info@pasorasolutionltd.com').trim();
+  window.location.href = `mailto:${to}?subject=${subject}&body=${body}`;
+  formNote.textContent = `Opening your email app now. You can also write to us directly at ${to}`;
   form.reset();
 });

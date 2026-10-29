@@ -1,0 +1,11 @@
+# Uploaded media only. Never serve or execute code from this folder.
+<FilesMatch "\.(php|phtml|php[0-9]|phps|cgi|pl|py|sh|asp|aspx|jsp|htaccess)$">
+  Require all denied
+</FilesMatch>
+
+# Neutralise any script embedded in an uploaded file (e.g. a crafted SVG)
+# if someone opens it directly, and stop MIME sniffing.
+<IfModule mod_headers.c>
+  Header set Content-Security-Policy "default-src 'none'; img-src 'self' data:; style-src 'unsafe-inline'"
+  Header set X-Content-Type-Options "nosniff"
+</IfModule>

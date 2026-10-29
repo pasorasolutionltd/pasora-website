@@ -3,6 +3,9 @@
 # (Applies when hosted on Apache/XAMPP or most shared hosting)
 # ============================================================
 
+# Serve the PHP homepage first
+DirectoryIndex index.php index.html
+
 # Disable directory listing
 Options -Indexes
 

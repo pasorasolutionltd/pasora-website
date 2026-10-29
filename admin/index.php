@@ -126,6 +126,43 @@ function latest_github_commit(string $repo): ?array
     ];
 }
 
+/**
+ * Validate and store an uploaded logo into /uploads.
+ * @return array{0:bool,1:string} [ok, relative path | error message]
+ */
+function handle_logo_upload(array $file): array
+{
+    if (($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
+        return [false, 'Logo upload failed (error ' . (int) ($file['error'] ?? -1) . ').'];
+    }
+    if (($file['size'] ?? 0) > 2 * 1024 * 1024) {
+        return [false, 'Logo is larger than 2 MB.'];
+    }
+    $ext     = strtolower(pathinfo((string) $file['name'], PATHINFO_EXTENSION));
+    $allowed = ['png', 'jpg', 'jpeg', 'webp', 'gif', 'svg'];
+    if (!in_array($ext, $allowed, true)) {
+        return [false, 'Unsupported logo type. Use PNG, JPG, WebP, GIF or SVG.'];
+    }
+    $tmp = (string) $file['tmp_name'];
+    if ($ext === 'svg') {
+        $head = (string) @file_get_contents($tmp, false, null, 0, 2048);
+        if (stripos($head, '<svg') === false) {
+            return [false, 'That file does not look like a valid SVG.'];
+        }
+    } elseif (@getimagesize($tmp) === false) {
+        return [false, 'That file is not a valid image.'];
+    }
+    $dir = dirname(__DIR__) . '/uploads';
+    if (!is_dir($dir) && !@mkdir($dir, 0755, true) && !is_dir($dir)) {
+        return [false, 'Could not create the uploads folder.'];
+    }
+    $name = 'logo-' . date('YmdHis') . '-' . bin2hex(random_bytes(3)) . '.' . $ext;
+    if (!@move_uploaded_file($tmp, $dir . '/' . $name)) {
+        return [false, 'Could not save the uploaded logo.'];
+    }
+    return [true, 'uploads/' . $name];
+}
+
 function deploy_log_tail(int $n = 12): array
 {
     $file = __DIR__ . '/deploy.log';
@@ -236,9 +273,10 @@ function page_top(string $title, string $siteName): void
   h2{font-size:15px;margin:0 0 14px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.6px}
   p{margin:0 0 12px;color:var(--muted)}
   label{display:block;font-size:13px;margin:0 0 6px;color:var(--ink)}
-  input[type=password],input[type=text],select{width:100%;padding:11px 13px;border-radius:10px;
-       border:1px solid var(--line);background:#0b1230;color:var(--ink);font-size:15px;margin-bottom:14px}
-  input:focus,select:focus{outline:2px solid var(--brand);border-color:transparent}
+  input[type=password],input[type=text],input[type=file],select,textarea{width:100%;padding:11px 13px;border-radius:10px;
+       border:1px solid var(--line);background:#0b1230;color:var(--ink);font-size:15px;margin-bottom:14px;font-family:inherit}
+  textarea{min-height:64px;resize:vertical}
+  input:focus,select:focus,textarea:focus{outline:2px solid var(--brand);border-color:transparent}
   button{appearance:none;border:0;cursor:pointer;font:inherit;font-weight:700;
        padding:12px 20px;border-radius:10px;color:#fff;
        background:linear-gradient(135deg,var(--brand),var(--brand2))}
@@ -434,6 +472,86 @@ if ($action === 'settings') {
     exit;
 }
 
+/* ── Content: edit the public site's text, logo & social links ── */
+if ($action === 'content') {
+    require __DIR__ . '/../content.php';   // sets $SCHEMA and $C (live values)
+    $saved = false;
+    $err   = '';
+
+    if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['do'] ?? '') === 'savecontent') {
+        if (!csrf_ok()) {
+            $err = 'Session expired — please try again.';
+        } else {
+            $posted = (array) ($_POST['f'] ?? []);
+            $values = [];
+            foreach ($SCHEMA as $group) {
+                foreach ($group['fields'] as $key => $def) {
+                    $values[$key] = trim((string) ($posted[$key] ?? ($C[$key] ?? '')));
+                }
+            }
+            if (!empty($_FILES['logo_file']['name']) && is_uploaded_file((string) $_FILES['logo_file']['tmp_name'])) {
+                [$ok, $res] = handle_logo_upload($_FILES['logo_file']);
+                if ($ok) {
+                    $values['logo'] = $res;
+                } else {
+                    $err = $res;
+                }
+            }
+            if ($err === '') {
+                $json = json_encode($values, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+                if (@file_put_contents(__DIR__ . '/content.local.json', $json, LOCK_EX) !== false) {
+                    deploy_log('Content updated.');
+                    $C     = array_merge($C, $values);
+                    $saved = true;
+                } else {
+                    $err = 'Could not write admin/content.local.json (check folder permissions).';
+                }
+            }
+        }
+    }
+
+    page_top('Content', $config['site_name']);
+    echo '<div class="row" style="justify-content:space-between">';
+    echo '<h1 style="margin:0">Edit content</h1>';
+    echo '<form method="get" action="index.php" style="margin:0"><button class="ghost" type="submit">&larr; Back</button></form>';
+    echo '</div><p>Edit any text, the logo and social links on the public site. Changes go live immediately &mdash; no push needed.</p>';
+    if ($saved) { echo '<div class="note ok">&#10003; Saved. <a href="/" target="_blank" rel="noopener">View the site &rarr;</a></div>'; }
+    if ($err)   { echo '<div class="note err">' . h($err) . '</div>'; }
+
+    echo '<form method="post" action="index.php?action=content" enctype="multipart/form-data">';
+    echo '<input type="hidden" name="csrf" value="' . h(csrf_token()) . '">';
+    echo '<input type="hidden" name="do" value="savecontent">';
+    foreach ($SCHEMA as $group) {
+        echo '<div class="card"><h2>' . h($group['label']) . '</h2>';
+        foreach ($group['fields'] as $key => $def) {
+            $label = (string) $def[0];
+            $type  = (string) $def[1];
+            $cur   = (string) ($C[$key] ?? $def[2]);
+            $id    = 'f_' . $key;
+            echo '<label for="' . h($id) . '">' . h($label) . '</label>';
+            if ($type === 'image') {
+                if ($cur !== '') {
+                    echo '<div style="margin-bottom:10px"><img src="/' . h(ltrim($cur, '/')) . '" alt="current logo" '
+                       . 'style="max-height:60px;max-width:220px;background:#0b1230;border:1px solid var(--line);border-radius:8px;padding:6px"></div>';
+                }
+                echo '<input type="hidden" name="f[' . h($key) . ']" value="' . h($cur) . '">';
+                echo '<input id="' . h($id) . '" type="file" name="logo_file" accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml">';
+                echo '<p class="muted" style="margin-top:-8px">PNG, JPG, SVG, WebP or GIF, max 2 MB. Leave empty to keep the current logo.</p>';
+            } elseif ($type === 'textarea' || $type === 'list') {
+                echo '<textarea id="' . h($id) . '" name="f[' . h($key) . ']" rows="' . ($type === 'list' ? 2 : 3) . '">' . h($cur) . '</textarea>';
+            } else {
+                echo '<input id="' . h($id) . '" type="text" name="f[' . h($key) . ']" value="' . h($cur) . '">';
+            }
+        }
+        echo '</div>';
+    }
+    echo '<div class="card"><button type="submit">Save changes</button> '
+       . '<span class="muted" style="margin-left:8px">Saved changes appear on the site right away.</span></div>';
+    echo '</form>';
+    page_bottom();
+    exit;
+}
+
 /* ── Dashboard ────────────────────────────────────────────────── */
 $path   = $config['git_path'] ?: dirname(__DIR__);
 $commit = current_commit($path);
@@ -448,6 +566,8 @@ page_top('Deploy', $config['site_name']);
 echo '<div class="row" style="justify-content:space-between">';
 echo '<h1 style="margin:0">Deploy</h1>';
 echo '<span class="row" style="gap:8px">';
+echo '<form method="get" action="index.php" style="margin:0"><input type="hidden" name="action" value="content">'
+   . '<button class="ghost" type="submit">Content</button></form>';
 echo '<form method="get" action="index.php" style="margin:0"><input type="hidden" name="action" value="settings">'
    . '<button class="ghost" type="submit">Settings</button></form>';
 echo '<form method="get" action="index.php" style="margin:0"><input type="hidden" name="action" value="logout">'
