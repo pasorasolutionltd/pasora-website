@@ -247,59 +247,157 @@ function h(string $s): string
     return htmlspecialchars($s, ENT_QUOTES, 'UTF-8');
 }
 
-/* ── Page chrome ──────────────────────────────────────────────── */
-function page_top(string $title, string $siteName): void
+/* ── Presentation ─────────────────────────────────────────────── */
+function icon(string $name): string
+{
+    $p = [
+        'dashboard' => '<rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/>',
+        'content'   => '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/>',
+        'settings'  => '<line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/>',
+        'view'      => '<path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>',
+        'logout'    => '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>',
+    ];
+    return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' . ($p[$name] ?? '') . '</svg>';
+}
+
+function admin_css(): string
+{
+    return <<<CSS
+  :root{--bg:#0b1024;--sidebar:#0e1534;--card:#141c40;--card2:#0f1636;--line:#263163;
+        --ink:#eceffe;--muted:#93a0cf;--brand:#5b8cff;--brand2:#8a5bff;
+        --okbg:#0f2f22;--okln:#1f6f4e;--okink:#7ff0b6;--errbg:#331320;--errln:#7a2b3b;--errink:#ffb3c0;--rad:14px}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;line-height:1.55;-webkit-font-smoothing:antialiased}
+  a{color:var(--brand);text-decoration:none}
+  h1{font-size:20px;margin:0}
+  p{margin:0 0 12px;color:var(--muted)}
+  code{background:var(--card2);padding:2px 6px;border-radius:6px;font-size:12.5px}
+  .muted{color:var(--muted);font-size:13px}
+  body.auth{display:grid;place-items:center;min-height:100vh;padding:24px;background:radial-gradient(1100px 560px at 50% -12%,rgba(91,140,255,.18),transparent),var(--bg)}
+  .auth-wrap{width:100%;max-width:400px}
+  .auth-brand{display:flex;align-items:center;gap:11px;justify-content:center;margin-bottom:18px}
+  .logo{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--brand),var(--brand2));display:grid;place-items:center;color:#fff;font-weight:800;flex:0 0 36px}
+  .auth-brand b{font-weight:800}.auth-brand small{display:block;color:var(--muted);font-size:11px;letter-spacing:.14em;text-transform:uppercase}
+  .app{display:flex;min-height:100vh}
+  .sidebar{width:248px;flex:0 0 248px;background:var(--sidebar);border-right:1px solid var(--line);display:flex;flex-direction:column;position:sticky;top:0;height:100vh}
+  .side-brand{display:flex;align-items:center;gap:11px;padding:18px;border-bottom:1px solid var(--line)}
+  .side-brand b{font-weight:800;font-size:15px;line-height:1.15}
+  .side-brand small{display:block;color:var(--muted);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase}
+  .side-nav{padding:14px 12px;display:flex;flex-direction:column;gap:4px;flex:1;overflow:auto}
+  .side-sec{font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);padding:10px 12px 6px;opacity:.7}
+  .nav-link{display:flex;align-items:center;gap:11px;padding:10px 12px;border-radius:10px;color:var(--muted);font-weight:600;font-size:14px}
+  .nav-link svg{width:18px;height:18px;flex:0 0 18px}
+  .nav-link:hover{background:rgba(255,255,255,.05);color:var(--ink)}
+  .nav-link.active{background:linear-gradient(135deg,rgba(91,140,255,.22),rgba(138,91,255,.22));color:#fff;box-shadow:inset 0 0 0 1px rgba(91,140,255,.35)}
+  .side-foot{padding:12px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:4px}
+  .main{flex:1;min-width:0;display:flex;flex-direction:column}
+  .topbar{position:sticky;top:0;z-index:5;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:15px 26px;background:rgba(11,16,36,.82);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+  .topbar .sub{color:var(--muted);font-size:13px;margin-top:2px}
+  .top-actions{display:flex;gap:8px;align-items:center}
+  .page{padding:24px 26px;max-width:920px;width:100%}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--rad);padding:22px;margin-bottom:18px;scroll-margin-top:92px}
+  .card h2{font-size:11.5px;margin:0 0 16px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.1em}
+  label{display:block;font-size:13px;margin:0 0 6px;color:var(--ink);font-weight:500}
+  input[type=password],input[type=text],input[type=file],select,textarea{width:100%;padding:11px 13px;border-radius:10px;border:1px solid var(--line);background:var(--card2);color:var(--ink);font-size:14.5px;margin-bottom:15px;font-family:inherit}
+  textarea{min-height:70px;resize:vertical;line-height:1.5}
+  input:focus,select:focus,textarea:focus{outline:2px solid var(--brand);border-color:transparent}
+  button,.btn{display:inline-flex;align-items:center;gap:7px;appearance:none;border:0;cursor:pointer;font:inherit;font-weight:700;font-size:14px;padding:11px 18px;border-radius:10px;color:#fff;background:linear-gradient(135deg,var(--brand),var(--brand2));box-shadow:0 6px 16px rgba(91,140,255,.25);text-decoration:none}
+  button:hover,.btn:hover{filter:brightness(1.07)}
+  button.ghost,.btn.ghost{background:transparent;border:1px solid var(--line);color:var(--muted);box-shadow:none;font-weight:600}
+  button.ghost:hover,.btn.ghost:hover{color:#fff;border-color:var(--brand)}
+  .btn.sm,button.sm{padding:8px 14px;font-size:13px;border-radius:9px}
+  .btn.sm svg,button.sm svg{width:15px;height:15px}
+  .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .kv{display:flex;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid var(--line);font-size:14px}
+  .kv:last-child{border-bottom:0}.kv span:first-child{color:var(--muted)}
+  .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:18px}
+  .tile{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 18px}
+  .tile .t-l{font-size:10.5px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted)}
+  .tile .t-v{font-size:15px;font-weight:700;margin-top:7px;word-break:break-word}
+  .badge{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;padding:4px 10px;border-radius:999px;background:var(--okbg);color:var(--okink);border:1px solid var(--okln)}
+  .note{border-radius:10px;padding:12px 14px;font-size:14px;margin-bottom:16px}
+  .note.ok{background:var(--okbg);border:1px solid var(--okln);color:var(--okink)}
+  .note.err{background:var(--errbg);border:1px solid var(--errln);color:var(--errink)}
+  pre{background:var(--card2);border:1px solid var(--line);border-radius:10px;padding:12px;overflow:auto;font-size:12.5px;color:#cfd8ff;white-space:pre-wrap;word-break:break-word}
+  .secnav{position:sticky;top:67px;z-index:4;display:flex;gap:8px;flex-wrap:wrap;padding:12px 0;margin-bottom:6px;background:var(--bg)}
+  .secnav a{font-size:12.5px;font-weight:600;color:var(--muted);background:var(--card);border:1px solid var(--line);padding:6px 12px;border-radius:999px}
+  .secnav a:hover{color:#fff;border-color:var(--brand)}
+  .savebar{position:sticky;bottom:0;background:rgba(11,16,36,.92);backdrop-filter:blur(8px);border-top:1px solid var(--line);padding:14px 0;margin-top:8px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  @media(max-width:820px){
+    .app{flex-direction:column}
+    .sidebar{width:100%;flex:none;height:auto;position:static;flex-direction:row;align-items:center;overflow-x:auto;border-right:0;border-bottom:1px solid var(--line)}
+    .side-brand{border-bottom:0;border-right:1px solid var(--line);white-space:nowrap;padding:14px}
+    .side-nav{flex-direction:row;padding:8px;gap:6px;flex:1}
+    .side-sec{display:none}
+    .side-foot{flex-direction:row;border-top:0;border-left:1px solid var(--line)}
+    .nav-link{white-space:nowrap}
+    .topbar{padding:14px 16px}.page{padding:18px 16px}
+    .secnav{top:0}
+  }
+CSS;
+}
+
+function doc_head(string $title, string $site): void
 {
     $t = h($title);
-    $s = h($siteName);
+    $s = h($site);
+    $css = admin_css();
     echo <<<HTML
 <!DOCTYPE html>
 <html lang="en"><head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex, nofollow">
-<title>{$t} · Admin</title>
+<title>{$t} · {$s} Admin</title>
 <style>
-  :root{--bg:#0d1533;--card:#141d42;--line:#26315f;--ink:#eef1ff;--muted:#9aa6d6;
-        --brand:#5b8cff;--brand2:#8a5bff;--ok:#1f9d57;--okbg:#10361f;--err:#e2566a;--errbg:#3a131c;}
-  *{box-sizing:border-box}
-  body{margin:0;background:var(--bg);color:var(--ink);
-       font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;line-height:1.5}
-  .wrap{max-width:720px;margin:0 auto;padding:32px 16px}
-  .brand{display:flex;align-items:center;gap:10px;margin-bottom:24px}
-  .brand b{font-weight:800;letter-spacing:.5px}
-  .brand span{color:var(--muted);font-size:13px}
-  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:22px;margin-bottom:18px}
-  h1{font-size:20px;margin:0 0 4px}
-  h2{font-size:15px;margin:0 0 14px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.6px}
-  p{margin:0 0 12px;color:var(--muted)}
-  label{display:block;font-size:13px;margin:0 0 6px;color:var(--ink)}
-  input[type=password],input[type=text],input[type=file],select,textarea{width:100%;padding:11px 13px;border-radius:10px;
-       border:1px solid var(--line);background:#0b1230;color:var(--ink);font-size:15px;margin-bottom:14px;font-family:inherit}
-  textarea{min-height:64px;resize:vertical}
-  input:focus,select:focus,textarea:focus{outline:2px solid var(--brand);border-color:transparent}
-  button{appearance:none;border:0;cursor:pointer;font:inherit;font-weight:700;
-       padding:12px 20px;border-radius:10px;color:#fff;
-       background:linear-gradient(135deg,var(--brand),var(--brand2))}
-  button.ghost{background:transparent;border:1px solid var(--line);color:var(--muted);font-weight:600}
-  .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-  .kv{display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid var(--line);font-size:14px}
-  .kv:last-child{border-bottom:0}
-  .kv span:first-child{color:var(--muted)}
-  .note{border-radius:10px;padding:12px 14px;font-size:14px;margin-bottom:16px}
-  .note.ok{background:var(--okbg);border:1px solid #1f9d57;color:#8ff0b6}
-  .note.err{background:var(--errbg);border:1px solid var(--err);color:#ffb3c0}
-  pre{background:#0b1230;border:1px solid var(--line);border-radius:10px;padding:12px;
-      overflow:auto;font-size:12.5px;color:#cfd8ff;white-space:pre-wrap;word-break:break-word}
-  a{color:var(--brand)}
-  .muted{color:var(--muted);font-size:13px}
-</style></head><body><div class="wrap">
-<div class="brand"><b>{$s}</b><span>· Deploy admin</span></div>
+{$css}
+</style></head>
 HTML;
+}
+
+function page_top(string $title, string $siteName): void  // centered auth screens
+{
+    doc_head($title, $siteName);
+    echo '<body class="auth"><div class="auth-wrap">';
+    echo '<div class="auth-brand"><span class="logo">P</span><span><b>' . h($siteName) . '</b><small>Admin panel</small></span></div>';
 }
 
 function page_bottom(): void
 {
-    echo "</div></body></html>";
+    echo '</div></body></html>';
+}
+
+function sidebar(string $active): string
+{
+    $item = static function (string $key, string $href, string $ic, string $label) use ($active): string {
+        $cls = 'nav-link' . ($active === $key ? ' active' : '');
+        return '<a class="' . $cls . '" href="' . $href . '">' . icon($ic) . '<span>' . $label . '</span></a>';
+    };
+    $h  = '<aside class="sidebar">';
+    $h .= '<div class="side-brand"><span class="logo">P</span><span><b>Pasora</b><small>Admin</small></span></div>';
+    $h .= '<nav class="side-nav"><div class="side-sec">Manage</div>';
+    $h .= $item('dashboard', 'index.php', 'dashboard', 'Dashboard');
+    $h .= $item('content', 'index.php?action=content', 'content', 'Content');
+    $h .= $item('settings', 'index.php?action=settings', 'settings', 'Settings');
+    $h .= '</nav><div class="side-foot">';
+    $h .= '<a class="nav-link" href="/" target="_blank" rel="noopener">' . icon('view') . '<span>View site</span></a>';
+    $h .= '<a class="nav-link" href="index.php?action=logout">' . icon('logout') . '<span>Sign out</span></a>';
+    $h .= '</div></aside>';
+    return $h;
+}
+
+function app_top(string $active, string $title, string $site, string $subtitle = '', string $actions = ''): void
+{
+    doc_head($title, $site);
+    echo '<body class="app">';
+    echo sidebar($active);
+    echo '<main class="main"><header class="topbar"><div><h1>' . h($title) . '</h1>'
+       . ($subtitle !== '' ? '<div class="sub">' . $subtitle . '</div>' : '')
+       . '</div><div class="top-actions">' . $actions . '</div></header><div class="page">';
+}
+
+function app_bottom(): void
+{
+    echo '</div></main></body></html>';
 }
 
 /* ──────────────────────────────────────────────────────────────
@@ -446,11 +544,8 @@ if ($action === 'settings') {
     }
 
     $mode = $config['deploy_mode'] ?? 'webhook';
-    page_top('Settings', $config['site_name']);
-    echo '<div class="row" style="justify-content:space-between">';
-    echo '<h1 style="margin:0">Settings</h1>';
-    echo '<form method="get" action="index.php" style="margin:0"><button class="ghost" type="submit">&larr; Back</button></form>';
-    echo '</div><p>Tell the panel how the <b>Deploy now</b> button should publish your site.</p>';
+    app_top('settings', 'Settings', $config['site_name'], 'How the site publishes to the server');
+    echo '<p>Tell the panel how the <b>Deploy now</b> button should publish your site.</p>';
     if ($saved) { echo '<div class="note ok">&#10003; Settings saved.</div>'; }
     if ($err)   { echo '<div class="note err">' . h($err) . '</div>'; }
 
@@ -468,7 +563,7 @@ if ($action === 'settings') {
     echo '<input id="gp" type="text" name="git_path" value="' . h((string) ($config['git_path'] ?? dirname(__DIR__))) . '">';
     echo '<button type="submit">Save settings</button>';
     echo '</form></div>';
-    page_bottom();
+    app_bottom();
     exit;
 }
 
@@ -510,19 +605,22 @@ if ($action === 'content') {
         }
     }
 
-    page_top('Content', $config['site_name']);
-    echo '<div class="row" style="justify-content:space-between">';
-    echo '<h1 style="margin:0">Edit content</h1>';
-    echo '<form method="get" action="index.php" style="margin:0"><button class="ghost" type="submit">&larr; Back</button></form>';
-    echo '</div><p>Edit any text, the logo and social links on the public site. Changes go live immediately &mdash; no push needed.</p>';
+    $viewBtn = '<a class="btn ghost sm" href="/" target="_blank" rel="noopener">' . icon('view') . 'View site</a>';
+    app_top('content', 'Content', $config['site_name'], 'Edit the public site &mdash; changes go live instantly', $viewBtn);
     if ($saved) { echo '<div class="note ok">&#10003; Saved. <a href="/" target="_blank" rel="noopener">View the site &rarr;</a></div>'; }
     if ($err)   { echo '<div class="note err">' . h($err) . '</div>'; }
+
+    echo '<div class="secnav">';
+    foreach ($SCHEMA as $gkey => $group) {
+        echo '<a href="#grp-' . h($gkey) . '">' . h($group['label']) . '</a>';
+    }
+    echo '</div>';
 
     echo '<form method="post" action="index.php?action=content" enctype="multipart/form-data">';
     echo '<input type="hidden" name="csrf" value="' . h(csrf_token()) . '">';
     echo '<input type="hidden" name="do" value="savecontent">';
-    foreach ($SCHEMA as $group) {
-        echo '<div class="card"><h2>' . h($group['label']) . '</h2>';
+    foreach ($SCHEMA as $gkey => $group) {
+        echo '<div class="card" id="grp-' . h($gkey) . '"><h2>' . h($group['label']) . '</h2>';
         foreach ($group['fields'] as $key => $def) {
             $label = (string) $def[0];
             $type  = (string) $def[1];
@@ -545,10 +643,10 @@ if ($action === 'content') {
         }
         echo '</div>';
     }
-    echo '<div class="card"><button type="submit">Save changes</button> '
-       . '<span class="muted" style="margin-left:8px">Saved changes appear on the site right away.</span></div>';
+    echo '<div class="savebar"><button type="submit">Save changes</button>'
+       . '<span class="muted">Saved changes appear on the site right away.</span></div>';
     echo '</form>';
-    page_bottom();
+    app_bottom();
     exit;
 }
 
@@ -561,19 +659,8 @@ $ready  = $mode === 'git'
         : (trim((string) ($config['deploy_hook_url'] ?? '')) !== '');
 $gh     = latest_github_commit((string) ($config['github_repo'] ?? ''));
 
-page_top('Deploy', $config['site_name']);
-
-echo '<div class="row" style="justify-content:space-between">';
-echo '<h1 style="margin:0">Deploy</h1>';
-echo '<span class="row" style="gap:8px">';
-echo '<form method="get" action="index.php" style="margin:0"><input type="hidden" name="action" value="content">'
-   . '<button class="ghost" type="submit">Content</button></form>';
-echo '<form method="get" action="index.php" style="margin:0"><input type="hidden" name="action" value="settings">'
-   . '<button class="ghost" type="submit">Settings</button></form>';
-echo '<form method="get" action="index.php" style="margin:0"><input type="hidden" name="action" value="logout">'
-   . '<button class="ghost" type="submit">Sign out</button></form>';
-echo '</span>';
-echo '</div><p>This site is connected to GitHub and publishes automatically.</p>';
+$viewBtn = '<a class="btn ghost sm" href="/" target="_blank" rel="noopener">' . icon('view') . 'View site</a>';
+app_top('dashboard', 'Dashboard', $config['site_name'], 'Deployment overview', $viewBtn);
 
 if ($flash) {
     echo '<div class="note ' . ($flash[0] ? 'ok' : 'err') . '">'
@@ -581,19 +668,26 @@ if ($flash) {
        . h($flash[1]) . '</div>';
 }
 
-echo '<div class="card"><h2>Status</h2>';
+echo '<div class="tiles">';
+echo '<div class="tile"><div class="t-l">Auto-deploy</div><div class="t-v"><span class="badge">On</span></div></div>';
+echo '<div class="tile"><div class="t-l">Latest on GitHub</div><div class="t-v">' . ($gh ? h($gh['sha']) : '&mdash;') . '</div></div>';
+echo '<div class="tile"><div class="t-l">Deploy method</div><div class="t-v">' . h($mode) . '</div></div>';
+echo '<div class="tile"><div class="t-l">Server time</div><div class="t-v">' . h(date('H:i')) . '</div></div>';
+echo '</div>';
+
+echo '<div class="card"><h2>Deployment</h2>';
 if ($gh) {
-    echo '<div class="kv"><span>Latest on GitHub</span><span>' . h($gh['sha'] . ' — ' . $gh['message']) . '</span></div>';
+    echo '<div class="kv"><span>Latest commit</span><span>' . h($gh['sha'] . ' — ' . $gh['message']) . '</span></div>';
     if ($gh['date'] !== '') {
         echo '<div class="kv"><span>Committed</span><span>' . h(date('Y-m-d H:i', (int) strtotime($gh['date']))) . '</span></div>';
     }
 } else {
-    echo '<div class="kv"><span>Latest on GitHub</span><span>&mdash;</span></div>';
+    echo '<div class="kv"><span>Latest commit</span><span>&mdash;</span></div>';
 }
 if ($commit) {
     echo '<div class="kv"><span>Server commit</span><span>' . h($commit) . '</span></div>';
 }
-echo '<div class="kv"><span>Auto-deploy</span><span>On &mdash; deploys on every push to main</span></div>';
+echo '<div class="kv"><span>Auto-deploy</span><span>On — every push to main</span></div>';
 echo '<div class="kv"><span>Server time</span><span>' . h(date('Y-m-d H:i:s')) . '</span></div>';
 echo '</div>';
 
@@ -623,4 +717,4 @@ if ($tail) {
 }
 echo '</div>';
 
-page_bottom();
+app_bottom();
