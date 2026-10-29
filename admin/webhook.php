@@ -64,7 +64,7 @@ if (!is_dir($gitPath . '/.git')) {
 $out = (string) shell_exec('cd ' . escapeshellarg($gitPath) . ' 2>&1 && git pull 2>&1');
 $out = trim($out) ?: 'git produced no output.';
 
-$log = '[' . date('Y-m-d H:i:s') . '] WEBHOOK — ' . str_replace(["\r", "\n"], ' ', $out) . "\n";
+$log = '[' . date('Y-m-d H:i:s') . '] WEBHOOK: ' . str_replace(["\r", "\n"], ' ', $out) . "\n";
 @file_put_contents(__DIR__ . '/deploy.log', $log, FILE_APPEND | LOCK_EX);
 
 echo $out . "\n";

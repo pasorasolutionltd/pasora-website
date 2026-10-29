@@ -4,11 +4,11 @@
  * saved overrides (admin/content.local.json, git-ignored, survives deploys).
  *
  * Exposes:
- *   $SCHEMA  — the grouped field schema (for the admin editor)
- *   $C       — flat [key => value] of the live content
- *   c($key)  — raw value
- *   ch($key) — HTML-escaped value (use this in markup)
- *   clist($key) — array split from a comma-separated 'list' field
+ *   $SCHEMA  - the grouped field schema (for the admin editor)
+ *   $C       - flat [key => value] of the live content
+ *   c($key)  - raw value
+ *   ch($key) - HTML-escaped value (use this in markup)
+ *   clist($key) - array split from a comma-separated 'list' field
  */
 
 if (!isset($SCHEMA)) {

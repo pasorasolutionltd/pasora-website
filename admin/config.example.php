@@ -1,9 +1,9 @@
 <?php
 /**
- * Pasora admin — configuration TEMPLATE.
+ * Pasora admin - configuration TEMPLATE.
  *
  * Do NOT put real secrets in this file. Copy it to `config.local.php`
- * (which is git-ignored) — or just open /admin/ once and use the
+ * (which is git-ignored) - or just open /admin/ once and use the
  * first-run "Create password" screen, which writes config.local.php for you.
  *
  *   cp admin/config.example.php admin/config.local.php
@@ -18,7 +18,7 @@ return [
 
     // How the "Deploy now" button publishes the latest code.
     //   'webhook' = send an HTTPS POST to a deploy URL (recommended on
-    //               Hostinger shared hosting — no SSH needed).
+    //               Hostinger shared hosting - no SSH needed).
     //   'git'     = run `git pull` on the server (needs SSH/git + a .git
     //               folder in the deploy path; Business/Cloud plans).
     'deploy_mode' => 'webhook',
@@ -40,7 +40,7 @@ return [
     // Shown in the admin header.
     'site_name' => 'Pasora Solution Ltd',
 
-    // owner/repo on GitHub — used to show the latest commit in the panel.
+    // owner/repo on GitHub - used to show the latest commit in the panel.
     'github_repo' => 'pasorasolutionltd/pasora-website',
 
     // Lock the account for this many seconds after 5 failed logins.

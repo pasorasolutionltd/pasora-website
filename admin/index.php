@@ -1,6 +1,6 @@
 <?php
 /**
- * Pasora Solution Ltd — deploy admin.
+ * Pasora Solution Ltd admin.
  *
  * A tiny, dependency-free backend to publish the latest code from GitHub
  * to this server with one click. Protected by a password you set yourself.
@@ -247,6 +247,20 @@ function h(string $s): string
     return htmlspecialchars($s, ENT_QUOTES, 'UTF-8');
 }
 
+function rel_time(string $iso): string
+{
+    $t = strtotime($iso);
+    if ($t === false) {
+        return '';
+    }
+    $d = time() - $t;
+    if ($d < 60)      { return 'just now'; }
+    if ($d < 3600)    { $n = (int) floor($d / 60);    return $n . ($n === 1 ? ' minute ago' : ' minutes ago'); }
+    if ($d < 86400)   { $n = (int) floor($d / 3600);  return $n . ($n === 1 ? ' hour ago'   : ' hours ago'); }
+    if ($d < 2592000) { $n = (int) floor($d / 86400); return $n . ($n === 1 ? ' day ago'    : ' days ago'); }
+    return date('M j, Y', $t);
+}
+
 /* ── Presentation ─────────────────────────────────────────────── */
 function icon(string $name): string
 {
@@ -433,7 +447,7 @@ if ($needsSetup) {
     $err = '';
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (!csrf_ok()) {
-            $err = 'Session expired — please try again.';
+            $err = 'Session expired, please try again.';
         } else {
             $p1 = (string) ($_POST['pw'] ?? '');
             $p2 = (string) ($_POST['pw2'] ?? '');
@@ -481,7 +495,7 @@ if (!is_authed()) {
 
     if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$locked) {
         if (!csrf_ok()) {
-            $err = 'Session expired — please try again.';
+            $err = 'Session expired, please try again.';
         } elseif (password_verify((string) ($_POST['pw'] ?? ''), (string) $config['password_hash'])) {
             $_SESSION['authed']     = true;
             $_SESSION['login_fails'] = 0;
@@ -522,10 +536,10 @@ if (!is_authed()) {
 $flash = null;
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['do'] ?? '') === 'deploy') {
     if (!csrf_ok()) {
-        $flash = [false, 'Session expired — please try again.'];
+        $flash = [false, 'Session expired, please try again.'];
     } else {
         [$ok, $msg] = run_deploy($config);
-        deploy_log(($ok ? 'OK  ' : 'FAIL') . ' — ' . $msg);
+        deploy_log(($ok ? 'OK' : 'FAIL') . ': ' . $msg);
         $flash = [$ok, $msg];
     }
 }
@@ -536,7 +550,7 @@ if ($action === 'settings') {
     $err   = '';
     if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['do'] ?? '') === 'savesettings') {
         if (!csrf_ok()) {
-            $err = 'Session expired — please try again.';
+            $err = 'Session expired, please try again.';
         } else {
             $mode = (($_POST['deploy_mode'] ?? 'webhook') === 'git') ? 'git' : 'webhook';
             $url  = trim((string) ($_POST['deploy_hook_url'] ?? ''));
@@ -568,10 +582,10 @@ if ($action === 'settings') {
     echo '<input type="hidden" name="do" value="savesettings">';
     echo '<label for="dm">Deploy method</label>';
     echo '<select id="dm" name="deploy_mode">';
-    echo '<option value="webhook"' . ($mode === 'webhook' ? ' selected' : '') . '>webhook &mdash; POST to a deploy URL (no SSH)</option>';
-    echo '<option value="git"' . ($mode === 'git' ? ' selected' : '') . '>git &mdash; run git pull on the server</option>';
+    echo '<option value="webhook"' . ($mode === 'webhook' ? ' selected' : '') . '>Webhook (send a POST to a deploy URL, no SSH)</option>';
+    echo '<option value="git"' . ($mode === 'git' ? ' selected' : '') . '>Git (run git pull on the server)</option>';
     echo '</select>';
-    echo '<label for="url">Deploy webhook URL <span class="muted">(webhook mode &mdash; paste from hPanel &rarr; Git &rarr; auto-deployment)</span></label>';
+    echo '<label for="url">Deploy webhook URL <span class="muted">(webhook mode. Paste it from hPanel, Git, auto-deployment)</span></label>';
     echo '<input id="url" type="text" name="deploy_hook_url" value="' . h((string) ($config['deploy_hook_url'] ?? '')) . '" placeholder="https://...">';
     echo '<label for="gp">Git path <span class="muted">(git mode only)</span></label>';
     echo '<input id="gp" type="text" name="git_path" value="' . h((string) ($config['git_path'] ?? dirname(__DIR__))) . '">';
@@ -589,7 +603,7 @@ if ($action === 'content') {
 
     if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['do'] ?? '') === 'savecontent') {
         if (!csrf_ok()) {
-            $err = 'Session expired — please try again.';
+            $err = 'Session expired, please try again.';
         } else {
             $posted = (array) ($_POST['f'] ?? []);
             $values = [];
@@ -620,7 +634,7 @@ if ($action === 'content') {
     }
 
     $viewBtn = '<a class="btn ghost sm" href="/" target="_blank" rel="noopener">' . icon('view') . 'View site</a>';
-    app_top('content', 'Content', $config['site_name'], 'Edit the public site &mdash; changes go live instantly', $viewBtn);
+    app_top('content', 'Content', $config['site_name'], 'Update your site text, images and links. Changes publish instantly.', $viewBtn);
     if ($saved) { echo '<div class="note ok">&#10003; Saved. <a href="/" target="_blank" rel="noopener">View the site &rarr;</a></div>'; }
     if ($err)   { echo '<div class="note err">' . h($err) . '</div>'; }
 
@@ -665,60 +679,58 @@ if ($action === 'content') {
 }
 
 /* ── Dashboard ────────────────────────────────────────────────── */
-$path   = $config['git_path'] ?: dirname(__DIR__);
-$commit = current_commit($path);
-$mode   = $config['deploy_mode'] ?? 'webhook';
-$ready  = $mode === 'git'
-        ? (shell_available() && is_dir($path . '/.git'))
-        : (trim((string) ($config['deploy_hook_url'] ?? '')) !== '');
-$gh     = latest_github_commit((string) ($config['github_repo'] ?? ''));
+$repo    = trim((string) ($config['github_repo'] ?? ''));
+$repoUrl = $repo !== '' ? 'https://github.com/' . $repo : '';
+$mode    = $config['deploy_mode'] ?? 'webhook';
+$ready   = $mode === 'git'
+         ? (shell_available() && is_dir(($config['git_path'] ?: dirname(__DIR__)) . '/.git'))
+         : (trim((string) ($config['deploy_hook_url'] ?? '')) !== '');
+$gh      = latest_github_commit($repo);
 
-$viewBtn = '<a class="btn ghost sm" href="/" target="_blank" rel="noopener">' . icon('view') . 'View site</a>';
-app_top('dashboard', 'Dashboard', $config['site_name'], 'Deployment overview', $viewBtn);
+$actions = '<a class="btn ghost sm" href="/" target="_blank" rel="noopener">' . icon('view') . 'View site</a>'
+         . '<a class="btn sm" href="index.php?action=content">' . icon('content') . 'Edit content</a>';
+app_top('dashboard', 'Dashboard', $config['site_name'], 'Your site is connected to GitHub and publishes automatically.', $actions);
 
 if ($flash) {
     echo '<div class="note ' . ($flash[0] ? 'ok' : 'err') . '">'
-       . ($flash[0] ? '&#10003; Deploy triggered. ' : '&#10007; Deploy failed. ')
+       . ($flash[0] ? 'Re-published. ' : 'Publish failed. ')
        . h($flash[1]) . '</div>';
 }
 
 echo '<div class="tiles">';
-echo '<div class="tile"><div class="t-l">Auto-deploy</div><div class="t-v"><span class="badge">On</span></div></div>';
-echo '<div class="tile"><div class="t-l">Latest on GitHub</div><div class="t-v">' . ($gh ? h($gh['sha']) : '&mdash;') . '</div></div>';
-echo '<div class="tile"><div class="t-l">Deploy method</div><div class="t-v">' . h($mode) . '</div></div>';
-echo '<div class="tile"><div class="t-l">Server time</div><div class="t-v">' . h(date('H:i')) . '</div></div>';
+echo '<div class="tile"><div class="t-l">Publishing</div><div class="t-v"><span class="badge">Automatic</span></div></div>';
+echo '<div class="tile"><div class="t-l">Branch</div><div class="t-v">main</div></div>';
+echo '<div class="tile"><div class="t-l">Latest commit</div><div class="t-v">' . ($gh ? h($gh['sha']) : 'Checking') . '</div></div>';
+echo '<div class="tile"><div class="t-l">Last updated</div><div class="t-v">' . ($gh && $gh['date'] !== '' ? h(rel_time($gh['date'])) : 'Unknown') . '</div></div>';
 echo '</div>';
 
-echo '<div class="card"><h2>Deployment</h2>';
+echo '<div class="card"><h2>Repository</h2>';
+if ($repoUrl !== '') {
+    echo '<div class="kv"><span>Source</span><span><a href="' . h($repoUrl) . '" target="_blank" rel="noopener">' . h($repo) . '</a></span></div>';
+}
+echo '<div class="kv"><span>Branch</span><span>main</span></div>';
 if ($gh) {
-    echo '<div class="kv"><span>Latest commit</span><span>' . h($gh['sha'] . ' — ' . $gh['message']) . '</span></div>';
+    echo '<div class="kv"><span>Latest commit</span><span>' . h($gh['message']) . '</span></div>';
+    echo '<div class="kv"><span>Commit ID</span><span>' . h($gh['sha']) . '</span></div>';
     if ($gh['date'] !== '') {
-        echo '<div class="kv"><span>Committed</span><span>' . h(date('Y-m-d H:i', (int) strtotime($gh['date']))) . '</span></div>';
+        echo '<div class="kv"><span>Committed</span><span>' . h(date('M j, Y, g:i a', (int) strtotime($gh['date'])) . ' (' . rel_time($gh['date']) . ')') . '</span></div>';
     }
 } else {
-    echo '<div class="kv"><span>Latest commit</span><span>&mdash;</span></div>';
+    echo '<div class="kv"><span>Latest commit</span><span class="muted">Could not reach GitHub right now.</span></div>';
 }
-if ($commit) {
-    echo '<div class="kv"><span>Server commit</span><span>' . h($commit) . '</span></div>';
-}
-echo '<div class="kv"><span>Auto-deploy</span><span>On — every push to main</span></div>';
-echo '<div class="kv"><span>Server time</span><span>' . h(date('Y-m-d H:i:s')) . '</span></div>';
 echo '</div>';
 
-echo '<div class="card"><h2>Publish</h2>';
+echo '<div class="card"><h2>How publishing works</h2>';
+echo '<div class="note ok">Changes you make in <b>Content</b> appear on your site instantly. No deploy needed.</div>';
+echo '<p>When new code is pushed to the <code>main</code> branch on GitHub, Hostinger publishes it to your live site automatically, usually within a few seconds.</p>';
 if ($ready) {
-    echo '<p>Click to ' . ($mode === 'git' ? 'run <code>git pull</code> on the server.' : 'send the deploy webhook.') . '</p>';
-    echo '<form method="post" action="index.php">';
+    echo '<form method="post" action="index.php" style="margin-top:2px">';
     echo '<input type="hidden" name="csrf" value="' . h(csrf_token()) . '">';
     echo '<input type="hidden" name="do" value="deploy">';
-    echo '<button type="submit">Deploy now</button>';
+    echo '<button type="submit">Re-publish now</button>';
     echo '</form>';
 } else {
-    echo '<div class="note ok">Your site deploys <b>automatically</b> every time you push to the '
-       . '<code>main</code> branch on GitHub &mdash; usually within a few seconds.</div>';
-    echo '<p>To re-publish without a new commit, use '
-       . '<b>hPanel &rarr; Websites &rarr; Advanced &rarr; GIT &rarr; Redeploy</b>. '
-       . 'A one-click redeploy button here would need SSH/git access, which this hosting plan does not allow.</p>';
+    echo '<p class="muted">To re-publish the latest code without a new commit, open hPanel, go to Websites, Advanced, GIT, then click Redeploy.</p>';
 }
 echo '</div>';
 
