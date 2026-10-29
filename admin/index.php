@@ -270,6 +270,7 @@ function icon(string $name): string
         'settings'  => '<line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/>',
         'view'      => '<path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>',
         'logout'    => '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>',
+        'briefcase' => '<rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>',
     ];
     return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' . ($p[$name] ?? '') . '</svg>';
 }
@@ -406,6 +407,8 @@ function sidebar(string $active): string
     $h .= $item('dashboard', 'index.php', 'dashboard', 'Dashboard');
     $h .= $item('content', 'index.php?action=content', 'content', 'Content');
     $h .= $item('settings', 'index.php?action=settings', 'settings', 'Settings');
+    $h .= '<div class="side-sec">Apps</div>';
+    $h .= '<a class="nav-link" href="https://app.pasorasolutionltd.com" target="_blank" rel="noopener">' . icon('briefcase') . '<span>Business System</span></a>';
     $h .= '</nav><div class="side-foot">';
     $h .= '<a class="nav-link" href="/" target="_blank" rel="noopener">' . icon('view') . '<span>View site</span></a>';
     $h .= '<a class="nav-link" href="index.php?action=logout">' . icon('logout') . '<span>Sign out</span></a>';
