@@ -1,0 +1,5 @@
+# Protect admin secrets & logs from direct web access.
+# (index.php and webhook.php stay reachable.)
+<FilesMatch "(^config\.(local|example)\.php$|\.log$|^\.auth\.php$)">
+  Require all denied
+</FilesMatch>

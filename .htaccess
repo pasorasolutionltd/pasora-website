@@ -1,0 +1,50 @@
+# ============================================================
+# Pasora Solution Ltd — Apache security settings
+# (Applies when hosted on Apache/XAMPP or most shared hosting)
+# ============================================================
+
+# Disable directory listing
+Options -Indexes
+
+# Block access to hidden files (.htaccess, .git, etc.)
+<FilesMatch "^\.">
+  Require all denied
+</FilesMatch>
+
+<IfModule mod_headers.c>
+  # Prevent MIME-type sniffing
+  Header always set X-Content-Type-Options "nosniff"
+
+  # Disallow embedding the site in iframes (clickjacking protection)
+  Header always set X-Frame-Options "DENY"
+
+  # Only send the origin as referrer to other sites
+  Header always set Referrer-Policy "strict-origin-when-cross-origin"
+
+  # Opt out of browser features the site doesn't use
+  Header always set Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=(), usb=()"
+
+  # Content Security Policy — only allow our own files + Google Fonts
+  Header always set Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; frame-ancestors 'none'; base-uri 'self'; form-action 'self' mailto:; object-src 'none'"
+
+  # Enforce HTTPS for 6 months once the site is served over TLS
+  # (uncomment after SSL certificate is installed)
+  # Header always set Strict-Transport-Security "max-age=15768000; includeSubDomains"
+</IfModule>
+
+# Redirect HTTP to HTTPS (uncomment after SSL certificate is installed)
+# <IfModule mod_rewrite.c>
+#   RewriteEngine On
+#   RewriteCond %{HTTPS} off
+#   RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+# </IfModule>
+
+# Sensible caching for static assets
+<IfModule mod_expires.c>
+  ExpiresActive On
+  ExpiresByType text/css "access plus 7 days"
+  ExpiresByType application/javascript "access plus 7 days"
+  ExpiresByType image/svg+xml "access plus 30 days"
+  ExpiresByType image/png "access plus 30 days"
+  ExpiresByType image/jpeg "access plus 30 days"
+</IfModule>

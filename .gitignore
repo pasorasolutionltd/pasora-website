@@ -1,0 +1,16 @@
+# ── OS junk ───────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ── Admin: local secrets & logs (NEVER commit these) ──────
+admin/config.local.php
+admin/deploy.log
+admin/*.log
+admin/.auth.php
+
+# ── Future-proofing (not used today, but safe to ignore) ──
+node_modules/
+vendor/
+.env
+.env.*
