@@ -57,16 +57,13 @@ Add webhook**, paste it as the Payload URL, content type
 1. Visit `https://your-domain/admin/`.
 2. First run shows **Create your admin password** — set one (min 10 chars).
    It is stored only as a one-way hash in `admin/config.local.php`.
-3. Tell the panel how to deploy. Easiest = **webhook mode** (default). Create
-   `admin/config.local.php` on the server (copy `config.example.php`) and set:
+3. Tell the panel how to deploy. In `/admin/`, click **Settings** (top-right):
+   - **Deploy method**: `webhook` (default, no SSH needed).
+   - **Deploy webhook URL**: paste the auto-deployment URL from hPanel → Git.
+   - Save. The **Deploy now** button is enabled once the URL is set.
 
-   ```php
-   'deploy_mode'     => 'webhook',
-   'deploy_hook_url' => 'https://<the Hostinger auto-deploy webhook URL>',
-   ```
-
-   Edit the file in hPanel → **File Manager**, or add the value and re-upload.
-   Once `deploy_hook_url` is filled, the **Deploy now** button is enabled.
+   (No File Manager needed — the Settings page writes `config.local.php` for
+   you. You can still edit that file by hand if you prefer.)
 
 That's it: push to GitHub whenever you like, and either let auto-deploy run or
 click **Deploy now** in `/admin/` to publish on demand.

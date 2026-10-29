@@ -196,9 +196,9 @@ function page_top(string $title, string $siteName): void
   h2{font-size:15px;margin:0 0 14px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.6px}
   p{margin:0 0 12px;color:var(--muted)}
   label{display:block;font-size:13px;margin:0 0 6px;color:var(--ink)}
-  input[type=password],input[type=text]{width:100%;padding:11px 13px;border-radius:10px;
+  input[type=password],input[type=text],select{width:100%;padding:11px 13px;border-radius:10px;
        border:1px solid var(--line);background:#0b1230;color:var(--ink);font-size:15px;margin-bottom:14px}
-  input:focus{outline:2px solid var(--brand);border-color:transparent}
+  input:focus,select:focus{outline:2px solid var(--brand);border-color:transparent}
   button{appearance:none;border:0;cursor:pointer;font:inherit;font-weight:700;
        padding:12px 20px;border-radius:10px;color:#fff;
        background:linear-gradient(135deg,var(--brand),var(--brand2))}
@@ -340,6 +340,60 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['do'] ?? '') === 'deploy') 
     }
 }
 
+/* ── Settings: configure how "Deploy now" publishes ───────────── */
+if ($action === 'settings') {
+    $saved = false;
+    $err   = '';
+    if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['do'] ?? '') === 'savesettings') {
+        if (!csrf_ok()) {
+            $err = 'Session expired — please try again.';
+        } else {
+            $mode = (($_POST['deploy_mode'] ?? 'webhook') === 'git') ? 'git' : 'webhook';
+            $url  = trim((string) ($_POST['deploy_hook_url'] ?? ''));
+            $gp   = trim((string) ($_POST['git_path'] ?? '')) ?: dirname(__DIR__);
+            if ($mode === 'webhook' && $url !== '' && !preg_match('~^https?://~i', $url)) {
+                $err = 'The deploy URL should start with http:// or https://';
+            } else {
+                $config['deploy_mode']     = $mode;
+                $config['deploy_hook_url'] = $url;
+                $config['git_path']        = $gp;
+                if (save_config($config, $configFile)) {
+                    deploy_log('Settings updated (mode=' . $mode . ').');
+                    $saved = true;
+                } else {
+                    $err = 'Could not write admin/config.local.php (check folder permissions).';
+                }
+            }
+        }
+    }
+
+    $mode = $config['deploy_mode'] ?? 'webhook';
+    page_top('Settings', $config['site_name']);
+    echo '<div class="row" style="justify-content:space-between">';
+    echo '<h1 style="margin:0">Settings</h1>';
+    echo '<form method="get" action="index.php" style="margin:0"><button class="ghost" type="submit">&larr; Back</button></form>';
+    echo '</div><p>Tell the panel how the <b>Deploy now</b> button should publish your site.</p>';
+    if ($saved) { echo '<div class="note ok">&#10003; Settings saved.</div>'; }
+    if ($err)   { echo '<div class="note err">' . h($err) . '</div>'; }
+
+    echo '<div class="card"><form method="post" action="index.php?action=settings">';
+    echo '<input type="hidden" name="csrf" value="' . h(csrf_token()) . '">';
+    echo '<input type="hidden" name="do" value="savesettings">';
+    echo '<label for="dm">Deploy method</label>';
+    echo '<select id="dm" name="deploy_mode">';
+    echo '<option value="webhook"' . ($mode === 'webhook' ? ' selected' : '') . '>webhook &mdash; POST to a deploy URL (no SSH)</option>';
+    echo '<option value="git"' . ($mode === 'git' ? ' selected' : '') . '>git &mdash; run git pull on the server</option>';
+    echo '</select>';
+    echo '<label for="url">Deploy webhook URL <span class="muted">(webhook mode &mdash; paste from hPanel &rarr; Git &rarr; auto-deployment)</span></label>';
+    echo '<input id="url" type="text" name="deploy_hook_url" value="' . h((string) ($config['deploy_hook_url'] ?? '')) . '" placeholder="https://...">';
+    echo '<label for="gp">Git path <span class="muted">(git mode only)</span></label>';
+    echo '<input id="gp" type="text" name="git_path" value="' . h((string) ($config['git_path'] ?? dirname(__DIR__))) . '">';
+    echo '<button type="submit">Save settings</button>';
+    echo '</form></div>';
+    page_bottom();
+    exit;
+}
+
 /* ── Dashboard ────────────────────────────────────────────────── */
 $commit = current_commit($config['git_path'] ?: dirname(__DIR__));
 $mode   = $config['deploy_mode'] ?? 'webhook';
@@ -351,8 +405,12 @@ page_top('Deploy', $config['site_name']);
 
 echo '<div class="row" style="justify-content:space-between">';
 echo '<h1 style="margin:0">Deploy</h1>';
+echo '<span class="row" style="gap:8px">';
+echo '<form method="get" action="index.php" style="margin:0"><input type="hidden" name="action" value="settings">'
+   . '<button class="ghost" type="submit">Settings</button></form>';
 echo '<form method="get" action="index.php" style="margin:0"><input type="hidden" name="action" value="logout">'
    . '<button class="ghost" type="submit">Sign out</button></form>';
+echo '</span>';
 echo '</div><p>Publish the latest code from GitHub to this server.</p>';
 
 if ($flash) {
