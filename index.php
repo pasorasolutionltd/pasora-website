@@ -1,6 +1,25 @@
 <?php
 require __DIR__ . '/content.php';
 
+/** Render one service card from a services_list() item. */
+function render_service_card(array $s, int $i): void
+{
+    $d = $i % 3;
+    $cls = $d === 1 ? ' delay-1' : ($d === 2 ? ' delay-2' : '');
+    echo '<article class="service-card reveal' . $cls . '">';
+    echo '<div class="service-icon">' . svc_icon((string) ($s['icon'] ?? 'star')) . '</div>';
+    echo '<h3>' . htmlspecialchars((string) $s['title'], ENT_QUOTES, 'UTF-8') . '</h3>';
+    echo '<p>' . htmlspecialchars((string) $s['desc'], ENT_QUOTES, 'UTF-8') . '</p>';
+    if (!empty($s['bullets'])) {
+        echo '<ul>';
+        foreach ($s['bullets'] as $b) {
+            echo '<li>' . htmlspecialchars((string) $b, ENT_QUOTES, 'UTF-8') . '</li>';
+        }
+        echo '</ul>';
+    }
+    echo '</article>';
+}
+
 $BASE = 'https://pasorasolutionltd.com';
 
 $ld = [
@@ -22,10 +41,13 @@ $ld = [
         'opens' => '08:00', 'closes' => '18:00',
     ],
     'hasOfferCatalog' => [
-        '@type' => 'OfferCatalog', 'name' => 'IT Services',
+        '@type' => 'OfferCatalog', 'name' => 'Services',
         'itemListElement' => array_map(static fn($t) => [
             '@type' => 'Offer', 'itemOffered' => ['@type' => 'Service', 'name' => $t],
-        ], [c('service1_title'), c('service2_title'), c('service3_title'), c('service4_title'), c('service5_title')]),
+        ], array_merge(
+            array_column(services_list('it'), 'title'),
+            array_column(services_list('travel'), 'title')
+        )),
     ],
     'sameAs' => array_values(array_filter([
         c('social_facebook'), c('social_instagram'), c('social_x'),
@@ -168,126 +190,12 @@ if (empty($ld['sameAs'])) {
 
       <h3 class="services-subhead reveal"><?= ch('services_it_head') ?></h3>
       <div class="services-grid">
-        <article class="service-card reveal">
-          <div class="service-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
-          </div>
-          <h3><?= ch('service1_title') ?></h3>
-          <p><?= ch('service1_desc') ?></p>
-          <ul>
-            <li><?= ch('service1_b1') ?></li>
-            <li><?= ch('service1_b2') ?></li>
-            <li><?= ch('service1_b3') ?></li>
-          </ul>
-        </article>
-
-        <article class="service-card reveal delay-1">
-          <div class="service-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19a4.5 4.5 0 1 0-.44-8.98A6 6 0 1 0 6 16.5"/><path d="M12 12v9"/><path d="m8 17 4 4 4-4"/></svg>
-          </div>
-          <h3><?= ch('service2_title') ?></h3>
-          <p><?= ch('service2_desc') ?></p>
-          <ul>
-            <li><?= ch('service2_b1') ?></li>
-            <li><?= ch('service2_b2') ?></li>
-            <li><?= ch('service2_b3') ?></li>
-          </ul>
-        </article>
-
-        <article class="service-card reveal delay-2">
-          <div class="service-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-3 8-10V5l-8-3-8 3v7c0 7 8 10 8 10z"/><rect x="9" y="10" width="6" height="5" rx="1"/><path d="M10 10V8a2 2 0 1 1 4 0v2"/></svg>
-          </div>
-          <h3><?= ch('service3_title') ?></h3>
-          <p><?= ch('service3_desc') ?></p>
-          <ul>
-            <li><?= ch('service3_b1') ?></li>
-            <li><?= ch('service3_b2') ?></li>
-            <li><?= ch('service3_b3') ?></li>
-          </ul>
-        </article>
-
-        <article class="service-card reveal delay-1">
-          <div class="service-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/><circle cx="12" cy="10" r="3"/></svg>
-          </div>
-          <h3><?= ch('service4_title') ?></h3>
-          <p><?= ch('service4_desc') ?></p>
-          <ul>
-            <li><?= ch('service4_b1') ?></li>
-            <li><?= ch('service4_b2') ?></li>
-            <li><?= ch('service4_b3') ?></li>
-          </ul>
-        </article>
-
-        <article class="service-card reveal delay-2">
-          <div class="service-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg>
-          </div>
-          <h3><?= ch('service5_title') ?></h3>
-          <p><?= ch('service5_desc') ?></p>
-          <ul>
-            <li><?= ch('service5_b1') ?></li>
-            <li><?= ch('service5_b2') ?></li>
-            <li><?= ch('service5_b3') ?></li>
-          </ul>
-        </article>
-
+        <?php foreach (services_list('it') as $i => $s) { render_service_card($s, $i); } ?>
       </div>
 
       <h3 class="services-subhead reveal"><?= ch('services_travel_head') ?></h3>
       <div class="services-grid">
-        <article class="service-card reveal">
-          <div class="service-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-          </div>
-          <h3><?= ch('travel1_title') ?></h3>
-          <p><?= ch('travel1_desc') ?></p>
-          <ul>
-            <li><?= ch('travel1_b1') ?></li>
-            <li><?= ch('travel1_b2') ?></li>
-            <li><?= ch('travel1_b3') ?></li>
-          </ul>
-        </article>
-
-        <article class="service-card reveal delay-1">
-          <div class="service-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-          </div>
-          <h3><?= ch('travel2_title') ?></h3>
-          <p><?= ch('travel2_desc') ?></p>
-          <ul>
-            <li><?= ch('travel2_b1') ?></li>
-            <li><?= ch('travel2_b2') ?></li>
-            <li><?= ch('travel2_b3') ?></li>
-          </ul>
-        </article>
-
-        <article class="service-card reveal delay-2">
-          <div class="service-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M5 21V7l8-4v18"/><path d="M19 21V11l-6-4"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="9" y1="13" x2="9.01" y2="13"/></svg>
-          </div>
-          <h3><?= ch('travel3_title') ?></h3>
-          <p><?= ch('travel3_desc') ?></p>
-          <ul>
-            <li><?= ch('travel3_b1') ?></li>
-            <li><?= ch('travel3_b2') ?></li>
-            <li><?= ch('travel3_b3') ?></li>
-          </ul>
-        </article>
-
-        <article class="service-card reveal delay-3">
-          <div class="service-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
-          </div>
-          <h3><?= ch('travel4_title') ?></h3>
-          <p><?= ch('travel4_desc') ?></p>
-          <ul>
-            <li><?= ch('travel4_b1') ?></li>
-            <li><?= ch('travel4_b2') ?></li>
-            <li><?= ch('travel4_b3') ?></li>
-          </ul>
-        </article>
+        <?php foreach (services_list('travel') as $i => $s) { render_service_card($s, $i); } ?>
 
         <article class="service-card service-card-cta reveal delay-3">
           <h3><?= ch('services_cta_title') ?></h3>

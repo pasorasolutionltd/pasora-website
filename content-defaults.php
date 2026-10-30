@@ -46,36 +46,6 @@ return [
         'services_lead'     => ['Lead', 'textarea', 'Five core capabilities and one simple promise: anything IT, we\'ve got you covered.'],
         'services_it_head'  => ['IT services heading', 'text', 'IT Services'],
 
-        'service1_title' => ['Card 1 title', 'text', 'Software Development'],
-        'service1_desc'  => ['Card 1 text', 'textarea', 'Custom web, mobile and enterprise applications built around the way you work. We stay with your project from the first sketch to launch and beyond.'],
-        'service1_b1'    => ['Card 1 bullet 1', 'text', 'Web & mobile apps'],
-        'service1_b2'    => ['Card 1 bullet 2', 'text', 'Enterprise systems'],
-        'service1_b3'    => ['Card 1 bullet 3', 'text', 'API & integrations'],
-
-        'service2_title' => ['Card 2 title', 'text', 'Cloud Solutions'],
-        'service2_desc'  => ['Card 2 text', 'textarea', 'Migrate, host and optimise in the cloud with secure, scalable infrastructure that keeps your team productive from anywhere.'],
-        'service2_b1'    => ['Card 2 bullet 1', 'text', 'Cloud migration'],
-        'service2_b2'    => ['Card 2 bullet 2', 'text', 'Hosting & backups'],
-        'service2_b3'    => ['Card 2 bullet 3', 'text', 'Cost optimisation'],
-
-        'service3_title' => ['Card 3 title', 'text', 'Cyber Security'],
-        'service3_desc'  => ['Card 3 text', 'textarea', 'Protect your data, systems and reputation with proactive security assessments, monitoring and incident response.'],
-        'service3_b1'    => ['Card 3 bullet 1', 'text', 'Security audits'],
-        'service3_b2'    => ['Card 3 bullet 2', 'text', 'Threat monitoring'],
-        'service3_b3'    => ['Card 3 bullet 3', 'text', 'Staff awareness training'],
-
-        'service4_title' => ['Card 4 title', 'text', 'IT Consulting'],
-        'service4_desc'  => ['Card 4 text', 'textarea', 'Honest, practical advice on strategy, systems and digital transformation, so every technology decision moves your business forward.'],
-        'service4_b1'    => ['Card 4 bullet 1', 'text', 'IT strategy & roadmaps'],
-        'service4_b2'    => ['Card 4 bullet 2', 'text', 'Digital transformation'],
-        'service4_b3'    => ['Card 4 bullet 3', 'text', 'Vendor selection'],
-
-        'service5_title' => ['Card 5 title', 'text', 'IT Support & Maintenance'],
-        'service5_desc'  => ['Card 5 text', 'textarea', 'A responsive helpdesk and preventive maintenance that keep your devices, networks and systems running day and night.'],
-        'service5_b1'    => ['Card 5 bullet 1', 'text', '24/7 helpdesk'],
-        'service5_b2'    => ['Card 5 bullet 2', 'text', 'Network & hardware care'],
-        'service5_b3'    => ['Card 5 bullet 3', 'text', 'Managed IT services'],
-
         'services_cta_title' => ['CTA card title', 'text', 'Have a project in mind?'],
         'services_cta_text'  => ['CTA card text', 'textarea', "Tell us what you need and we'll map out the right solution. No jargon, no obligation."],
         'services_cta_btn'   => ['CTA card button', 'text', 'Get a Free Consultation'],
@@ -83,30 +53,6 @@ return [
 
     'travel' => ['label' => 'Travelling services', 'fields' => [
         'services_travel_head' => ['Section heading', 'text', 'Travelling Services'],
-
-        'travel1_title' => ['Card 1 title', 'text', 'Flight Booking'],
-        'travel1_desc'  => ['Card 1 text', 'textarea', 'Find and book the right flights for your trip, with the best routes and fares for your schedule and budget.'],
-        'travel1_b1'    => ['Card 1 bullet 1', 'text', 'Local & international'],
-        'travel1_b2'    => ['Card 1 bullet 2', 'text', 'Best-fare search'],
-        'travel1_b3'    => ['Card 1 bullet 3', 'text', 'Flexible dates'],
-
-        'travel2_title' => ['Card 2 title', 'text', 'Visa Assistance'],
-        'travel2_desc'  => ['Card 2 text', 'textarea', 'End-to-end help with visa applications, documentation and appointments for a smooth, stress-free approval.'],
-        'travel2_b1'    => ['Card 2 bullet 1', 'text', 'Application support'],
-        'travel2_b2'    => ['Card 2 bullet 2', 'text', 'Document review'],
-        'travel2_b3'    => ['Card 2 bullet 3', 'text', 'Appointment booking'],
-
-        'travel3_title' => ['Card 3 title', 'text', 'Hotel Reservations'],
-        'travel3_desc'  => ['Card 3 text', 'textarea', 'Comfortable, well-located stays booked for you at competitive rates, from short trips to extended stays.'],
-        'travel3_b1'    => ['Card 3 bullet 1', 'text', 'Worldwide hotels'],
-        'travel3_b2'    => ['Card 3 bullet 2', 'text', 'Vetted options'],
-        'travel3_b3'    => ['Card 3 bullet 3', 'text', 'Group bookings'],
-
-        'travel4_title' => ['Card 4 title', 'text', 'Tour Packages'],
-        'travel4_desc'  => ['Card 4 text', 'textarea', 'Curated tour and holiday packages planned around where you want to go and what you want to experience.'],
-        'travel4_b1'    => ['Card 4 bullet 1', 'text', 'Custom itineraries'],
-        'travel4_b2'    => ['Card 4 bullet 2', 'text', 'Guided tours'],
-        'travel4_b3'    => ['Card 4 bullet 3', 'text', 'Group & solo'],
     ]],
 
     'about' => ['label' => 'About section', 'fields' => [

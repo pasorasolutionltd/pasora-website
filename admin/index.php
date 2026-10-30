@@ -349,6 +349,11 @@ function admin_css(): string
   .secnav a{font-size:12.5px;font-weight:500;color:var(--muted);background:var(--surface);border:1px solid var(--border);padding:5px 11px;border-radius:999px}
   .secnav a:hover{color:var(--accent);border-color:var(--accent-border);background:var(--accent-soft)}
   .savebar{position:sticky;bottom:0;background:var(--surface);border-top:1px solid var(--border);box-shadow:0 -4px 16px rgba(16,24,40,.05);padding:14px 0;margin-top:8px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .svc-item{border:1px solid var(--border);border-radius:10px;padding:16px 16px 4px;margin-bottom:14px;background:var(--surface-2)}
+  .svc-item-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+  .svc-item-top b{font-size:13px;color:var(--muted)}
+  .svc-row{display:grid;grid-template-columns:170px 1fr;gap:12px}
+  @media(max-width:600px){.svc-row{grid-template-columns:1fr}}
   @media(max-width:820px){
     .app{flex-direction:column}
     .sidebar{width:100%;flex:none;height:auto;position:static;flex-direction:row;align-items:center;overflow-x:auto;border-right:0;border-bottom:1px solid var(--border)}
@@ -598,13 +603,78 @@ if ($action === 'settings') {
     exit;
 }
 
-/* ── Content: edit the public site's text, logo & social links ── */
+/* ── Content helpers (growable service-card lists) ───────────── */
+function blank_service_row(): array
+{
+    return ['icon' => 'star', 'title' => '', 'desc' => '', 'bullets' => ['', '', '']];
+}
+
+function collect_service_rows($posted): array
+{
+    $out = [];
+    foreach ((array) $posted as $row) {
+        if (!is_array($row)) {
+            continue;
+        }
+        $b = array_values((array) ($row['b'] ?? []));
+        $out[] = [
+            'icon'    => trim((string) ($row['icon'] ?? 'star')),
+            'title'   => trim((string) ($row['title'] ?? '')),
+            'desc'    => trim((string) ($row['desc'] ?? '')),
+            'bullets' => [
+                trim((string) ($b[0] ?? '')),
+                trim((string) ($b[1] ?? '')),
+                trim((string) ($b[2] ?? '')),
+            ],
+        ];
+    }
+    return $out;
+}
+
+function render_service_cards_editor(string $which, string $label, array $list): void
+{
+    $field  = $which === 'it' ? 's_it' : 's_travel';
+    $anchor = $which === 'it' ? 'itcards' : 'travelcards';
+    $icons  = array_keys(svc_icon_paths());
+    echo '<div class="card" id="grp-' . h($anchor) . '"><h2>' . h($label) . '</h2>';
+    echo '<p class="muted" style="margin-top:-6px">Add, remove and edit the cards in this section. Pick an icon for each; a card with a blank title is skipped on the site.</p>';
+    foreach ($list as $i => $s) {
+        $s     = is_array($s) ? $s : [];
+        $icon  = (string) ($s['icon'] ?? 'star');
+        $title = (string) ($s['title'] ?? '');
+        $desc  = (string) ($s['desc'] ?? '');
+        $bul   = (array) ($s['bullets'] ?? []);
+        echo '<div class="svc-item">';
+        echo '<div class="svc-item-top"><b>Card ' . ($i + 1) . '</b>'
+           . '<button class="ghost sm" type="submit" name="do" value="rm_' . $which . '_' . $i . '">Remove</button></div>';
+        echo '<div class="svc-row">';
+        echo '<div><label>Icon</label><select name="' . $field . '[' . $i . '][icon]">';
+        foreach ($icons as $ic) {
+            echo '<option value="' . h($ic) . '"' . ($icon === $ic ? ' selected' : '') . '>' . h($ic) . '</option>';
+        }
+        echo '</select></div>';
+        echo '<div><label>Title</label><input type="text" name="' . $field . '[' . $i . '][title]" value="' . h($title) . '"></div>';
+        echo '</div>';
+        echo '<label>Description</label><textarea name="' . $field . '[' . $i . '][desc]" rows="2">' . h($desc) . '</textarea>';
+        for ($b = 0; $b < 3; $b++) {
+            echo '<input type="text" name="' . $field . '[' . $i . '][b][' . $b . ']" value="' . h((string) ($bul[$b] ?? '')) . '" placeholder="Bullet ' . ($b + 1) . ' (optional)">';
+        }
+        echo '</div>';
+    }
+    echo '<button class="ghost" type="submit" name="do" value="add_' . $which . '">+ Add card</button>';
+    echo '</div>';
+}
+
+/* ── Content: edit the public site's text, cards, logo & links ── */
 if ($action === 'content') {
-    require __DIR__ . '/../content.php';   // sets $SCHEMA and $C (live values)
-    $saved = false;
+    require __DIR__ . '/../content.php';   // $SCHEMA, $C, service helpers, svc icons
+    $saved = isset($_GET['saved']);
     $err   = '';
 
-    if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['do'] ?? '') === 'savecontent') {
+    $do   = (string) ($_POST['do'] ?? '');
+    $isRm = (bool) preg_match('/^rm_(it|travel)_(\d+)$/', $do, $rm);
+    if ($_SERVER['REQUEST_METHOD'] === 'POST'
+        && (in_array($do, ['savecontent', 'add_it', 'add_travel'], true) || $isRm)) {
         if (!csrf_ok()) {
             $err = 'Session expired, please try again.';
         } else {
@@ -615,6 +685,19 @@ if ($action === 'content') {
                     $values[$key] = trim((string) ($posted[$key] ?? ($C[$key] ?? '')));
                 }
             }
+            $itList     = collect_service_rows($_POST['s_it'] ?? []);
+            $travelList = collect_service_rows($_POST['s_travel'] ?? []);
+            if ($do === 'add_it') {
+                $itList[] = blank_service_row();
+            } elseif ($do === 'add_travel') {
+                $travelList[] = blank_service_row();
+            } elseif ($isRm && $rm[1] === 'it') {
+                unset($itList[(int) $rm[2]]);
+                $itList = array_values($itList);
+            } elseif ($isRm && $rm[1] === 'travel') {
+                unset($travelList[(int) $rm[2]]);
+                $travelList = array_values($travelList);
+            }
             if (!empty($_FILES['logo_file']['name']) && is_uploaded_file((string) $_FILES['logo_file']['tmp_name'])) {
                 [$ok, $res] = handle_logo_upload($_FILES['logo_file']);
                 if ($ok) {
@@ -624,20 +707,21 @@ if ($action === 'content') {
                 }
             }
             if ($err === '') {
+                $values['it_services']     = $itList;
+                $values['travel_services'] = $travelList;
                 $json = json_encode($values, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
                 if (@file_put_contents(__DIR__ . '/content.local.json', $json, LOCK_EX) !== false) {
                     deploy_log('Content updated.');
-                    $C     = array_merge($C, $values);
-                    $saved = true;
-                } else {
-                    $err = 'Could not write admin/content.local.json (check folder permissions).';
+                    header('Location: index.php?action=content&saved=1');
+                    exit;
                 }
+                $err = 'Could not write admin/content.local.json (check folder permissions).';
             }
         }
     }
 
     $viewBtn = '<a class="btn ghost sm" href="/" target="_blank" rel="noopener">' . icon('view') . 'View site</a>';
-    app_top('content', 'Content', $config['site_name'], 'Update your site text, images and links. Changes publish instantly.', $viewBtn);
+    app_top('content', 'Content', $config['site_name'], 'Update your site text, cards, images and links. Changes publish instantly.', $viewBtn);
     if ($saved) { echo '<div class="note ok">&#10003; Saved. <a href="/" target="_blank" rel="noopener">View the site &rarr;</a></div>'; }
     if ($err)   { echo '<div class="note err">' . h($err) . '</div>'; }
 
@@ -645,11 +729,14 @@ if ($action === 'content') {
     foreach ($SCHEMA as $gkey => $group) {
         echo '<a href="#grp-' . h($gkey) . '">' . h($group['label']) . '</a>';
     }
+    echo '<a href="#grp-itcards">IT service cards</a>';
+    echo '<a href="#grp-travelcards">Travelling cards</a>';
     echo '</div>';
 
     echo '<form method="post" action="index.php?action=content" enctype="multipart/form-data">';
     echo '<input type="hidden" name="csrf" value="' . h(csrf_token()) . '">';
-    echo '<input type="hidden" name="do" value="savecontent">';
+    // Default submit (so pressing Enter in a field saves instead of removing a card).
+    echo '<button type="submit" name="do" value="savecontent" style="position:absolute;left:-9999px" tabindex="-1" aria-hidden="true">Save</button>';
     foreach ($SCHEMA as $gkey => $group) {
         echo '<div class="card" id="grp-' . h($gkey) . '"><h2>' . h($group['label']) . '</h2>';
         foreach ($group['fields'] as $key => $def) {
@@ -674,7 +761,9 @@ if ($action === 'content') {
         }
         echo '</div>';
     }
-    echo '<div class="savebar"><button type="submit">Save changes</button>'
+    render_service_cards_editor('it', 'IT service cards', services_raw('it'));
+    render_service_cards_editor('travel', 'Travelling service cards', services_raw('travel'));
+    echo '<div class="savebar"><button type="submit" name="do" value="savecontent">Save changes</button>'
        . '<span class="muted">Saved changes appear on the site right away.</span></div>';
     echo '</form>';
     app_bottom();
