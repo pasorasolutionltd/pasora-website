@@ -288,9 +288,7 @@ if (empty($ld['sameAs'])) {
             <li><?= ch('travel4_b3') ?></li>
           </ul>
         </article>
-      </div>
 
-      <div class="services-grid">
         <article class="service-card service-card-cta reveal delay-3">
           <h3><?= ch('services_cta_title') ?></h3>
           <p><?= ch('services_cta_text') ?></p>
