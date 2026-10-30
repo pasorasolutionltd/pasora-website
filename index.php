@@ -77,6 +77,9 @@ if (empty($ld['sameAs'])) {
     .footer-social a{display:inline-flex;width:36px;height:36px;align-items:center;justify-content:center;border-radius:9px;background:rgba(255,255,255,.08);color:#fff;transition:background .2s ease,transform .2s ease}
     .footer-social a:hover{background:rgba(255,255,255,.18);transform:translateY(-2px)}
     .footer-social svg{width:18px;height:18px;display:block}
+    .services-subhead{font-family:var(--font-head);font-weight:800;font-size:clamp(22px,2.6vw,30px);color:var(--ink);text-align:center;letter-spacing:-.01em;margin:0 0 30px}
+    .services-subhead::after{content:"";display:block;width:56px;height:3px;margin:14px auto 0;border-radius:3px;background:var(--grad)}
+    .services-grid + .services-subhead{margin-top:52px}
   </style>
 
   <!-- Structured data for rich search results -->
@@ -163,6 +166,7 @@ if (empty($ld['sameAs'])) {
         <p class="section-lead"><?= ch('services_lead') ?></p>
       </div>
 
+      <h3 class="services-subhead reveal"><?= ch('services_it_head') ?></h3>
       <div class="services-grid">
         <article class="service-card reveal">
           <div class="service-icon">
@@ -229,6 +233,64 @@ if (empty($ld['sameAs'])) {
           </ul>
         </article>
 
+      </div>
+
+      <h3 class="services-subhead reveal"><?= ch('services_travel_head') ?></h3>
+      <div class="services-grid">
+        <article class="service-card reveal">
+          <div class="service-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+          </div>
+          <h3><?= ch('travel1_title') ?></h3>
+          <p><?= ch('travel1_desc') ?></p>
+          <ul>
+            <li><?= ch('travel1_b1') ?></li>
+            <li><?= ch('travel1_b2') ?></li>
+            <li><?= ch('travel1_b3') ?></li>
+          </ul>
+        </article>
+
+        <article class="service-card reveal delay-1">
+          <div class="service-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          </div>
+          <h3><?= ch('travel2_title') ?></h3>
+          <p><?= ch('travel2_desc') ?></p>
+          <ul>
+            <li><?= ch('travel2_b1') ?></li>
+            <li><?= ch('travel2_b2') ?></li>
+            <li><?= ch('travel2_b3') ?></li>
+          </ul>
+        </article>
+
+        <article class="service-card reveal delay-2">
+          <div class="service-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M5 21V7l8-4v18"/><path d="M19 21V11l-6-4"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="9" y1="13" x2="9.01" y2="13"/></svg>
+          </div>
+          <h3><?= ch('travel3_title') ?></h3>
+          <p><?= ch('travel3_desc') ?></p>
+          <ul>
+            <li><?= ch('travel3_b1') ?></li>
+            <li><?= ch('travel3_b2') ?></li>
+            <li><?= ch('travel3_b3') ?></li>
+          </ul>
+        </article>
+
+        <article class="service-card reveal delay-3">
+          <div class="service-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
+          </div>
+          <h3><?= ch('travel4_title') ?></h3>
+          <p><?= ch('travel4_desc') ?></p>
+          <ul>
+            <li><?= ch('travel4_b1') ?></li>
+            <li><?= ch('travel4_b2') ?></li>
+            <li><?= ch('travel4_b3') ?></li>
+          </ul>
+        </article>
+      </div>
+
+      <div class="services-grid">
         <article class="service-card service-card-cta reveal delay-3">
           <h3><?= ch('services_cta_title') ?></h3>
           <p><?= ch('services_cta_text') ?></p>
