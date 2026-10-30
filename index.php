@@ -326,11 +326,9 @@ if (empty($ld['sameAs'])) {
           <div class="form-field">
             <label for="cf-service">Service Needed</label>
             <select id="cf-service" name="service">
-              <option><?= ch('service1_title') ?></option>
-              <option><?= ch('service2_title') ?></option>
-              <option><?= ch('service3_title') ?></option>
-              <option><?= ch('service4_title') ?></option>
-              <option><?= ch('service5_title') ?></option>
+              <?php foreach (array_merge(services_list('it'), services_list('travel')) as $s): ?>
+              <option><?= htmlspecialchars($s['title'], ENT_QUOTES, 'UTF-8') ?></option>
+              <?php endforeach; ?>
               <option>Other / Not sure yet</option>
             </select>
           </div>
